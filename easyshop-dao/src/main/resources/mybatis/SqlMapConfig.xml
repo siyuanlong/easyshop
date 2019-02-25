@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<!--
+        mybatis框架主要是围绕着SqlSessionFactory进行的，创建过程大概如下：
+        (1)、定义一个Configuration对象，其中包含数据源、事务、mapper文件资源以及影响数据库行为属性设置settings
+        (2)、通过配置对象，则可以创建一个SqlSessionFactoryBuilder对象
+        (3)、通过 SqlSessionFactoryBuilder 获得SqlSessionFactory 的实例。
+        (4)、SqlSessionFactory 的实例可以获得操作数据的SqlSession实例，通过这个实例对数据库进行操作
+        -->
+
+<configuration>
+
+    <plugins>
+        <!-- 分页插件 -->
+        <plugin interceptor="com.baomidou.mybatisplus.plugins.PaginationInterceptor"></plugin>
+    </plugins>
+
+</configuration>

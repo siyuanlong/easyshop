@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <!-- 页面meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>规格管理</title>
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+	<link rel="stylesheet" href="../plugins/bootstrap/css/bootstrap.min.css" th:href="@{/plugins/bootstrap/css/bootstrap.min.css}">
+	<link rel="stylesheet" href="../plugins/adminLTE/css/AdminLTE.css" th:href="@{/plugins/adminLTE/css/AdminLTE.css}">
+	<link rel="stylesheet" href="../plugins/adminLTE/css/skins/_all-skins.min.css" th:href="@{/plugins/adminLTE/css/skins/_all-skins.min.css}">
+	<link rel="stylesheet" href="../css/style.css" th:href="@{/css/style.css}">
+	<script src="../plugins/jQuery/jquery-2.2.3.min.js" th:src="@{/plugins/jQuery/jquery-2.2.3.min.js}"></script>
+	<script src="../plugins/bootstrap/js/bootstrap.min.js" th:src="@{/plugins/bootstrap/js/bootstrap.min.js}"></script>
+	<!-- LayUI样式 -->
+	<script src="media/layui/layui.js" th:src="@{/media/layui/layui.js}"></script>
+
+	<script type="text/javascript">
+
+        /*跳转页码*/
+        function goPage(pageIndex){
+            $("#specificationForm").attr("action","/specification/test?index="+pageIndex);
+            $("#specificationForm").submit();
+        }
+
+		/*新增規格選項*/
+        function addOptions(){
+            var str = "<tr><td><input  class='form-control' name='optionNames' placeholder='规格选项'></td><td>\n" +
+                "<input  class='form-control' name='orders' placeholder='排序'></td><td>\n" +
+                "<button type='button' class='btn btn-default' title='删除' onclick='deleteOption(this)'>\n" +
+                "<i class='fa fa-trash-o'></i> 删除</button></td></tr>";
+            $("#tbody01").append(str);
+		}
+
+		/*編輯_新增規格選項*/
+       	function addUpdateOptions(){
+            var str = "<tr><td><input  class='form-control' name='optionNames' placeholder='规格选项'></td><td>\n" +
+                "<input  class='form-control' name='orders' placeholder='排序'></td><td>\n" +
+                "<button type='button' class='btn btn-default' title='删除' onclick='deleteOption(this)'>\n" +
+                "<i class='fa fa-trash-o'></i> 删除</button></td></tr>";
+            $("#tbody02").append(str);
+		}
+
+		/*刪除*/
+		function deleteOption(input) {
+			$(input).parent().parent().remove();
+        }
+
+        /*新增*/
+		function addSpecification(){
+
+		    $.post(
+		        "/specification/addSpecification",
+				$("#addForm").serialize(),
+				function (result) {
+                    layui.use('table', function() {
+                        if(result.aBoolean==true){
+                            layer.msg("新增成功", {icon : 6},function(){
+                                window.location.reload();//刷新页面
+                            });
+                        }else{
+                            layer.msg("新增失败", {icon : 5},function(){
+                                window.location.reload();//刷新页面
+                            });
+                        }
+                    });
+                }
+			)
+        }
+
+        /*修改前查询*/
+
+		function updateSpecification(id) {
+
+		    $.post(
+		        "/specification/findSpecification",
+				{"id":id},
+				function (result) {
+					$("#updateSpecNameid").val(result.spec.specName);
+					$("#input02").val(result.spec.id);
+					var list = result.sopList;
+                    $("#tbody02").html("");
+                    for (var i = 0; i <list.length ; i++) {
+                        var str = "<tr><td><input  class='form-control' name='optionNames' value='"+list[i].optionName+"' placeholder='规格选项'></td><td>\n" +
+                            "<input  class='form-control' name='orders' value='"+list[i].orders+"' placeholder='排序'></td><td>\n" +
+                            "<button type='button' class='btn btn-default' title='删除' onclick='deleteOption(this)'>\n" +
+                            "<i class='fa fa-trash-o'></i> 删除</button></td></tr>";
+                        $("#tbody02").append(str);
+                    }
+                }
+			)
+        }
+
+        /*更新*/
+		function editSpecification() {
+			$.post(
+			    "/specification/editSpecification",
+				$("#editForm").serialize(),
+				function (result) {
+					alert(JSON.stringify(result));
+                }
+			)
+        }
+
+        /*删除品牌信息*/
+        function deleteSpecification(id){
+            layui.use('table', function() {
+                layer.confirm('是否确认删除改品牌?',function(index) {
+                    $.post(
+                        "/specification/deleteSpecification",
+                        {"id":id},
+                        function (result) {
+                            layui.use('table', function() {
+                                if(result.aBoolean==true){
+                                    layer.msg("删除成功", {icon : 6},function(){
+                                        window.location.reload();//刷新页面
+                                    });
+                                }else{
+                                    layer.msg("删除失败", {icon : 5},function(){
+                                        window.location.reload();//刷新页面
+                                    });
+                                }
+                            });
+                        });
+                });
+            });
+        }
+
+        /*设置多选框全选、反选*/
+        function checkSelect(){
+            $("[name=brandIds]").prop("checked",$("#selall").prop("checked"));
+        }
+
+        /*批量刪除*/
+        function deleteMany() {
+
+            var count = $("[name=specificationIds]:checked").length;
+            if (count>0){
+                layui.use('table', function() {
+                    layer.confirm('是否确认删除?',function(index) {
+
+                        var arrayids = new Array();
+
+                        var specificationIds = $("[name=specificationIds]");
+                        for (var i = 0; i <specificationIds.length ; i++) {
+                            if (specificationIds[i].checked){
+                                arrayids.push(specificationIds[i].value);
+                                alert(specificationIds[i].checked);
+                            }
+                        }
+                        $.post(
+                            "/specification/deleteManySpecifications",
+                            "specificationIds="+arrayids,
+                            function (result){
+                                layui.use('table', function() {
+                                    if(result.aBoolean==true){
+                                        layer.msg("删除成功", {icon : 6},function(){
+                                            window.location.reload();//刷新页面
+                                        });
+                                    }else{
+                                        layer.msg("删除失败", {icon : 5},function(){
+                                            window.location.reload();//刷新页面
+                                        });
+                                    }
+                                });
+                            },"json");
+                    });
+                });
+            }else{
+                layui.use('table', function() {
+                    layer.msg("请先选择", {icon : 6});
+                });
+            }
+        }
+
+	</script>
+    
+</head>
+
+<body class="hold-transition skin-red sidebar-mini" >
+  <!-- .box-body -->                
+                    <div class="box-header with-border">
+                        <h3 class="box-title">规格管理</h3>
+                    </div>
+                    <div class="box-body">
+                        <!-- 数据表格 -->
+                        <div class="table-box">
+                            <!--工具栏-->
+                            <div class="pull-left">
+                                <div class="form-group form-inline">
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-default" title="新建" data-toggle="modal" data-target="#addModal"><i class="fa fa-file-o"></i> 新建</button>
+                                        <button type="button" class="btn btn-default" title="删除" onclick="deleteMany()"><i class="fa fa-trash-o" ></i> 批量删除</button>
+                                        <button type="button" class="btn btn-default" title="刷新" onclick="window.location.reload();"><i class="fa fa-refresh"></i> 刷新</button>
+                                    </div>
+                                </div>
+                            </div>
+
+							<!-- 搜索框 -->
+							<form action="#" th:action="@{/specification/test}" method="post" id="specificationForm">
+								<div class="box-tools pull-right">
+									<div class="has-feedback">
+										规格名称：<input type="text" name="specName" th:value="${pageUtil.bean.specName}">
+										<button  class="btn btn-default" type="submit">查询</button>
+									</div>
+								</div>
+							</form>
+							<!-- 搜索框 -->
+
+                            <!--工具栏/-->
+			                  <!--数据列表-->
+			                  <table id="dataList" class="table table-bordered table-striped table-hover dataTable">
+			                      <thead>
+			                          <tr>
+			                              <th class="" style="padding-right:0px">
+			                                  <input id="selall" type="checkbox" class="icheckbox_square-blue" onclick="checkSelect()">
+			                              </th> 
+										  <th class="sorting_asc">规格ID</th>
+									      <th class="sorting">规格名称</th>									     												
+					                      <th class="text-center">操作</th>
+			                          </tr>
+			                      </thead>
+			                      <tbody>
+			                          <tr th:each="specification:${pageUtil.list}">
+			                              <td><input  type="checkbox" name="specificationIds" th:value="${specification.id}"></td>
+				                          <td th:text="${specification.id}">1</td>
+									      <td th:text="${specification.specName}">网络制式</td>
+		                                  <td class="text-center">                                           
+		                                 	  <button type="button" class="btn bg-olive btn-xs" data-toggle="modal" data-target="#editModal" th:onclick="|updateSpecification(${specification.id})|">修改</button>
+		                                 	  <button type="button" class="btn bg-olive btn-xs" data-toggle="modal" th:onclick="|deleteSpecification(${specification.id})|">刪除</button>
+		                                  </td>
+			                          </tr>
+			                      </tbody>
+			                  </table>
+			                  <!--数据列表/-->
+
+							<!-- 添加分页的页码
+							 分页组件 -->
+							<div class="row">
+								<div class="col-sm-6"><div class="dataTables_paginate paging_bootstrap" id="sample-table_paginate">
+									<ul class="pagination">
+										<li class="prev"><a href="#" th:onclick="|goPage(1)|">首页</a></li>
+
+										<li class="prev"><a href="#" th:if="${hasPrevious==true}" th:onclick="|goPage(${pageUtil.pageIndex-1})|">上一页</a></li>
+
+										<li th:each="num:${pageUtil.numbers}" th:class="${pageUtil.pageIndex==num}?active"><a href="#" th:onclick="'goPage('+${num}+')'" th:text="${num}">1</a></li>
+
+										<li class="next"><a href="#" th:if="${hasNext==true}" th:onclick="|goPage(${pageUtil.pageIndex+1})|">下一页</a></li>
+
+										<li class="next"><a href="#" th:onclick="|goPage(${pageUtil.totalPage})|">尾页</a></li>
+										<li class="next"><a href="#" >共<span th:text="${pageUtil.totalCount}">XXXXX</span>条</a></li>
+									</ul>
+								</div>
+								</div>
+							</div>
+							<!-- 分页组件
+							 添加分页的页码 -->
+                        </div>
+                        <!-- 数据表格 /--> 
+                     </div>
+                    <!-- /.box-body -->                    
+	          		    
+                                
+<!-- 新增窗口 -->
+  <form id="addForm" method="post">
+<div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog" >
+	<div class="modal-content">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+			<h3 id="myAddModalLabel">规格新增</h3>
+		</div>
+		<div class="modal-body">							
+			
+			<table class="table table-bordered table-striped"  width="800px">
+		      	<tr>
+		      		<td>规格名称</td>
+		      		<td><input  class="form-control" name="specName" id="specNameid" placeholder="规格名称" >  </td>
+		      	</tr>
+			 </table>				
+			 
+			 <!-- 规格选项 -->
+			 <div class="btn-group">
+                  <button type="button" class="btn btn-default" title="新建" onclick="addOptions()"><i class="fa fa-file-o"></i> 新增规格选项</button>
+                  
+             </div>
+			 
+			 <table class="table table-bordered table-striped table-hover dataTable">
+                    <thead>
+                        <tr>
+
+
+				      <th class="sorting">规格选项</th>
+				      <th class="sorting">排序</th>																
+                      <th class="sorting">操作</th>	
+                    </thead>
+                    <tbody id="tbody01">
+                      <tr>
+                           
+				            <td>
+				            	<input  class="form-control" placeholder="规格选项" name="optionNames">
+				            </td>
+				            <td>
+				            	<input  class="form-control" placeholder="排序" name="orders">
+				            </td>
+							<td>
+								<button type="button" class="btn btn-default" title="删除" onclick="deleteOption(this)"><i class="fa fa-trash-o"></i> 删除</button>
+							</td>
+                      </tr>
+					  <tr>
+                         
+				            <td>
+				            	<input  class="form-control" placeholder="规格选项" name="optionNames">
+				            </td>
+				            <td>
+				            	<input  class="form-control" placeholder="排序" name="orders">
+				            </td>
+							<td>
+								<button type="button" class="btn btn-default" title="删除" onclick="deleteOption(this)" ><i class="fa fa-trash-o"></i> 删除</button>
+							</td>
+                      </tr>
+					  <tr>
+                           
+				            <td>
+				            	<input  class="form-control" placeholder="规格选项" name="optionNames">>
+				            </td>
+				            <td>
+				            	<input  class="form-control" placeholder="排序" name="orders">
+				            </td>
+							<td>
+								<button type="button" class="btn btn-default" title="删除" onclick="deleteOption(this)"><i class="fa fa-trash-o"></i> 删除</button>
+							</td>
+                      </tr>
+                    </tbody>
+			  </table> 
+			
+			
+		</div>
+		<div class="modal-footer">						
+			<button class="btn btn-success" data-dismiss="modal" aria-hidden="true" onclick="addSpecification()">保存</button>
+			<button class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+		</div>
+	  </div>
+	</div>
+</div>
+  </form>
+
+<!-- 编辑窗口 -->
+<form id="editForm" method="post">
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog" >
+	<div class="modal-content">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+			<h3 id="myModalLabel">规格编辑</h3>
+		</div>
+		<div class="modal-body">
+
+			<table class="table table-bordered table-striped"  width="800px">
+		      	<tr>
+		      		<td>规格名称</td>
+		      		<td>
+						<input  class="form-control" placeholder="规格名称" name="SpecName" id="updateSpecNameid" >
+						<input type="hidden" id="input02" name="id"/>
+					</td>
+		      	</tr>
+			 </table>
+
+			 <!-- 规格选项 -->
+			 <div class="btn-group">
+                  <button type="button" class="btn btn-default" title="新建"  onclick="addUpdateOptions()"><i class="fa fa-file-o"></i> 新增规格选项</button>
+             </div>
+
+			 <table class="table table-bordered table-striped table-hover dataTable">
+                    <thead>
+                        <tr>
+
+
+				      <th class="sorting">规格选项</th>
+				      <th class="sorting">排序</th>
+                      <th class="sorting">操作</th>
+                    </thead>
+                    <tbody id="tbody02">
+
+
+                    </tbody>
+			  </table>
+
+
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-success" data-dismiss="modal" aria-hidden="true" onclick="editSpecification()">更新</button>
+			<button class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+		</div>
+	  </div>
+	</div>
+</div>
+</form>
+</body>
+
+</html>

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <!-- 页面meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>类型模板管理</title>
+    <!-- Tell the browser to be responsive to screen width -->
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+    <link rel="stylesheet" href="../plugins/bootstrap/css/bootstrap.min.css"
+          th:href="@{/plugins/bootstrap/css/bootstrap.min.css}">
+    <link rel="stylesheet" href="../plugins/adminLTE/css/AdminLTE.css" th:href="@{/plugins/adminLTE/css/AdminLTE.css}">
+    <link rel="stylesheet" href="../plugins/adminLTE/css/skins/_all-skins.min.css"
+          th:href="@{/plugins/adminLTE/css/skins/_all-skins.min.css}">
+    <link rel="stylesheet" href="../css/style.css" th:href="@{/css/style.css}">
+    <script src="../plugins/jQuery/jquery-2.2.3.min.js" th:src="@{/plugins/jQuery/jquery-2.2.3.min.js}"></script>
+    <script src="../plugins/bootstrap/js/bootstrap.min.js" th:src="@{/plugins/bootstrap/js/bootstrap.min.js}"></script>
+    <link rel="stylesheet" href="../plugins/select2/select2.css" th:src="@{/plugins/select2/select2.css}"/>
+    <link rel="stylesheet" href="../plugins/select2/select2-bootstrap.css"
+          th:src="@{/plugins/select2/select2-bootstrap.css}"/>
+    <script src="../plugins/select2/select2.min.js" type="text/javascript"
+            th:src="@{/plugins/select2/select2.min.js}"></script>
+
+    <!-- LayUI样式 -->
+    <script src="media/layui/layui.js" th:src="@{/media/layui/layui.js}"></script>
+
+    <script type="text/javascript">
+
+        /*跳转页码*/
+        function goPage(pageIndex) {
+            $("#templateForm").attr("action", "/typeTemplate/test?index=" + pageIndex);
+            $("#templateForm").submit();
+        }
+
+        /*刪除*/
+        function deleteOption(input) {
+            $(input).parent().parent().remove();
+        }
+
+        /*新增規格選項*/
+        function addOptions() {
+            var str = "<tr><td><input type='checkbox' class='icheckbox_square-blue'></td>" +
+                "<td><input  class='form-control' name='customAttributeItems' placeholder='属性名称'></td><td>\n" +
+                "<button type='button' class='btn btn-default' title='删除' onclick='deleteOption(this)'>\n" +
+                "<i class='fa fa-trash-o'></i> 删除</button></td></tr>";
+            $("#tbody01").append(str);
+        }
+
+        function addUpdateOptions() {
+            var str = "<tr><td><input type='checkbox' class='icheckbox_square-blue'></td>" +
+                "<td><input  class='form-control' name='customAttributeItems' placeholder='属性名称'></td><td>\n" +
+                "<button type='button' class='btn btn-default' title='删除' onclick='deleteOption(this)'>\n" +
+                "<i class='fa fa-trash-o'></i> 删除</button></td></tr>";
+            $("#tbody02").append(str);
+        }
+
+        /*新增前查询关联品牌和关联规格*/
+        function selectBeforeAdd() {
+            $.post(
+                "/typeTemplate/selectBeforeAdd",
+                null,
+                function (result) {
+                    var brandList = result.brands;
+                    var specList = result.specifications;
+
+                    for (var i = 0; i < brandList.length; i++) {
+                        if ((i + 1) % 5 == 0) {
+                            $("#optionTr").append("<input type='checkbox' name='brandIds' value='" + brandList[i].id + "'/>" + brandList[i].name + "<br/>");
+                        } else {
+                            $("#optionTr").append("<input type='checkbox' name='brandIds' value='" + brandList[i].id + "'/>" + brandList[i].name + "&nbsp;&nbsp;&nbsp;");
+                        }
+                    }
+
+                    for (var i = 0; i < specList.length; i++) {
+                        if ((i + 1) % 5 == 0) {
+                            $("#brandTr").append("<input type='checkbox' name='specIds' value='" + specList[i].id + "'/>" + specList[i].specName + "<br/>");
+                        } else {
+                            $("#brandTr").append("<input type='checkbox' name='specIds' value='" + specList[i].id + "'/>" + specList[i].specName + "&nbsp;&nbsp;&nbsp;");
+                        }
+                    }
+                }
+            )
+        }
+
+        /*增加Template*/
+        function addTemplate() {
+            $.post(
+                "/typeTemplate/addTemplates",
+                $("#addForm").serialize(),
+                function (result) {
+                    alert(JSON.stringify(result));
+                    layui.use('table', function () {
+                        if (result.aBoolean == true) {
+                            layer.msg("新增成功", {icon: 6}, function () {
+                                window.location.reload();//刷新页面
+                            });
+                        } else {
+                            layer.msg("新增失败", {icon: 5}, function () {
+                                window.location.reload();//刷新页面
+                            });
+                        }
+                    });
+                }
+            )
+        }
+
+        /*修改前查询*/
+        function goUpdateTemplate(id) {
+            $.post(
+                "/typeTemplate/goUpdateTemplate",
+                {"templateId": id},
+                function (result) {
+                    alert(JSON.stringify(result));
+                    $("#templateid").val(result.typeTemplate.name);
+                    $("#templateId01").val(result.typeTemplate.id);
+                    var brandList = result.brandList;
+                    $("#optionTr02").html("");
+                    for (var i = 0; i < brandList.length; i++) {
+                        if ((i + 1) % 5 == 0) {
+                            if (brandList[i].flag == true) {
+                                $("#optionTr02").append("<input type='checkbox' name='brandIds' checked value='" + brandList[i].id + "'/>" + brandList[i].name + "<br/>");
+                            } else {
+                                $("#optionTr02").append("<input type='checkbox' name='brandIds' value='" + brandList[i].id + "'/>" + brandList[i].name + "<br/>");
+                            }
+                        } else {
+                            if (brandList[i].flag == true) {
+                                $("#optionTr02").append("<input type='checkbox' checked name='brandIds' value='" + brandList[i].id + "'/>" + brandList[i].name + "&nbsp;&nbsp;&nbsp;");
+                            } else {
+                                $("#optionTr02").append("<input type='checkbox' name='brandIds' value='" + brandList[i].id + "'/>" + brandList[i].name + "&nbsp;&nbsp;&nbsp;");
+                            }
+                        }
+                    }
+
+                    var specList = result.specList;
+                    $("#brandTr02").html("");
+                    for (var i = 0; i < specList.length; i++) {
+                        if ((i + 1) % 5 == 0) {
+                            if (specList[i].flag == true) {
+                                $("#brandTr02").append("<input type='checkbox' name='specIds' checked value='" + specList[i].id + "'/>" + specList[i].specName + "<br/>");
+                            } else {
+                                $("#brandTr02").append("<input type='checkbox' name='specIds' value='" + specList[i].id + "'/>" + specList[i].specName + "<br/>");
+                            }
+                        } else {
+                            if (specList[i].flag == true) {
+                                $("#brandTr02").append("<input type='checkbox' checked name='specIds' value='" + specList[i].id + "'/>" + specList[i].specName + "&nbsp;&nbsp;&nbsp;");
+                            } else {
+                                $("#brandTr02").append("<input type='checkbox' name='specIds' value='" + specList[i].id + "'/>" + specList[i].specName + "&nbsp;&nbsp;&nbsp;");
+                            }
+                        }
+                    }
+
+                    var itemsList = result.itemsList;
+                    $("#tbody02").html("");
+                    for (var i = 0; i < itemsList.length; i++) {
+                        var tr = "<tr><td><input type='checkbox' class='icheckbox_square-blue'></td>" +
+                            "<td><input class='form-control' value='" + itemsList[i].text + "' placeholder='属性名称' name='customAttributeItems'></td>" +
+                            "<td><button type='button' class='btn btn-default' title='删除' onclick='deleteOption(this);'><i class='fa fa-trash-o'></i> 删除</button></td></tr>";
+                        $("#tbody02").append(tr);
+                    }
+                }
+            )
+        }
+
+        /*更新*/
+        function updateTemplate() {
+            $.post(
+                "/typeTemplate/updateTemplate",
+                $("#updateForm").serialize(),
+                function (result) {
+                    alert(JSON.stringify(result));
+                    layui.use('table', function () {
+                        if (result.aBoolean == true) {
+                            layer.msg("新增成功", {icon: 6}, function () {
+                                window.location.reload();//刷新页面
+                            });
+                        } else {
+                            layer.msg("新增失败", {icon: 5}, function () {
+                                window.location.reload();//刷新页面
+                            });
+                        }
+                    });
+                }
+            )
+        }
+
+
+    </script>
+
+</head>
+
+<body class="hold-transition skin-red sidebar-mini">
+<!-- .box-body -->
+<div class="box-header with-border">
+    <h3 class="box-title">商品类型模板管理</h3>
+</div>
+
+<div class="box-body">
+
+    <!-- 数据表格 -->
+    <div class="table-box">
+
+        <!--工具栏-->
+        <div class="pull-left">
+            <div class="form-group form-inline">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-default" title="新建" data-toggle="modal" data-target="#addModal"
+                            onclick="selectBeforeAdd()"><i class="fa fa-file-o"></i> 新建
+                    </button>
+                    <button type="button" class="btn btn-default" title="删除"><i class="fa fa-trash-o"></i> 删除</button>
+
+                    <button type="button" class="btn btn-default" title="刷新" onclick="window.location.reload();"><i
+                            class="fa fa-refresh"></i> 刷新
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- 搜索框 -->
+        <form action="#" th:action="@{/typeTemplate/test}" method="post" id="templateForm">
+            <div class="box-tools pull-right">
+                <div class="has-feedback">
+                    模板名称：<input type="text" name="name" th:value="${pageUtil.bean.name}">
+                    <button class="btn btn-default" type="submit">查询</button>
+                </div>
+            </div>
+        </form>
+        <!-- 搜索框 -->
+        <!--工具栏/-->
+
+        <!--数据列表-->
+        <table id="dataList" class="table table-bordered table-striped table-hover dataTable">
+            <thead>
+            <tr>
+                <th class="" style="padding-right:0px">
+                    <input id="selall" type="checkbox" class="icheckbox_square-blue">
+                </th>
+                <th class="sorting_asc">模板ID</th>
+                <th class="sorting">分类模板名称</th>
+                <th class="sorting">关联品牌</th>
+                <th class="sorting">关联规格</th>
+                <th class="sorting">扩展属性</th>
+                <th class="text-center">操作</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="template:${pageUtil.list}">
+                <td><input type="checkbox"></td>
+                <td th:text="${template.id}">1</td>
+                <td th:text="${template.name}">手机</td>
+                <td th:text="${template.brandIds}">联想,华为,中兴</td>
+                <td th:text="${template.specIds}">网络制式</td>
+                <td th:text="${template.customAttributeItems}">内存大小</td>
+                <td class="text-center">
+                    <button type="button" class="btn bg-olive btn-xs" data-toggle="modal" data-target="#editModal"
+                            th:onclick="|goUpdateTemplate(${template.id})|">修改
+                    </button>
+                    <button type="button" class="btn bg-olive btn-xs" data-toggle="modal">删除</button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+        <!--数据列表/-->
+
+        <!-- 添加分页的页码
+         分页组件 -->
+        <div class="row">
+            <div class="col-sm-6">
+                <div class="dataTables_paginate paging_bootstrap" id="sample-table_paginate">
+                    <ul class="pagination">
+                        <li class="prev"><a href="#" th:onclick="|goPage(1)|">首页</a></li>
+
+                        <li class="prev"><a href="#" th:if="${hasPrevious==true}"
+                                            th:onclick="|goPage(${pageUtil.pageIndex-1})|">上一页</a></li>
+
+                        <li th:each="num:${pageUtil.numbers}" th:class="${pageUtil.pageIndex==num}?active"><a href="#"
+                                                                                                              th:onclick="'goPage('+${num}+')'"
+                                                                                                              th:text="${num}">1</a>
+                        </li>
+
+                        <li class="next"><a href="#" th:if="${hasNext==true}"
+                                            th:onclick="|goPage(${pageUtil.pageIndex+1})|">下一页</a></li>
+
+                        <li class="next"><a href="#" th:onclick="|goPage(${pageUtil.totalPage})|">尾页</a></li>
+                        <li class="next"><a href="#">共<span th:text="${pageUtil.totalCount}">XXXXX</span>条</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- 分页组件
+         添加分页的页码 -->
+
+    </div>
+    <!-- 数据表格 /-->
+</div>
+<!-- /.box-body -->
+<!-- 新增窗口 -->
+<form id="addForm" method="post">
+    <div class="modal fade" id="addModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h3 id="myModalAddLabel">商品类型模板编辑</h3>
+                </div>
+                <div class="modal-body">
+
+                    <table class="table table-bordered table-striped" width="800px">
+                        <tr>
+                            <td>商品类型</td>
+                            <td><input class="form-control" placeholder="商品类型" name="name"></td>
+                        </tr>
+                        <tr>
+                            <td>关联品牌</td>
+                            <td id="optionTr">
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>关联规格</td>
+                            <td id="brandTr">
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>扩展属性</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-default" title="新增扩展属性" onclick="addOptions()">
+                                        <i class="fa fa-file-o"></i> 新增扩展属性
+                                    </button>
+                                </div>
+                                <table class="table table-bordered table-striped" width="800px">
+                                    <thead>
+                                    <tr>
+                                        <td><input type="checkbox" class="icheckbox_square-blue"></td>
+                                        <td>属性名称</td>
+                                        <td>操作</td>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="tbody01">
+                                    <tr>
+                                        <td><input type="checkbox" class="icheckbox_square-blue"></td>
+                                        <td><input class="form-control" placeholder="属性名称" name="customAttributeItems">
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-default" title="删除"
+                                                    onclick="deleteOption(this)"><i class="fa fa-trash-o"></i> 删除
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" class="icheckbox_square-blue"
+                                                   name="customAttributeItems"></td>
+                                        <td><input class="form-control" placeholder="属性名称"></td>
+                                        <td>
+                                            <button type="button" class="btn btn-default" title="删除"
+                                                    onclick="deleteOption(this)"><i class="fa fa-trash-o"></i> 删除
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+
+                            </td>
+                        </tr>
+
+                    </table>
+
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" data-dismiss="modal" aria-hidden="true" onclick="addTemplate()">保存
+                    </button>
+                    <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- 编辑窗口 -->
+<form id="updateForm" method="post">
+    <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button>
+                    <h3 id="myModalLabel">商品类型模板编辑</h3>
+                </div>
+                <div class="modal-body">
+
+                    <table class="table table-bordered table-striped" width="800px">
+                        <tr>
+                            <td>商品类型</td>
+                            <td>
+                                <input class="form-control" placeholder="商品类型" name="name" id="templateid">
+                                <input type="hidden" name="id" id="templateId01"/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>关联品牌</td>
+                            <td id="optionTr02">
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>关联规格</td>
+                            <td id="brandTr02">
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>扩展属性</td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-default" title="新增扩展属性"
+                                            onclick="addUpdateOptions()"><i class="fa fa-file-o"></i> 新增扩展属性
+                                    </button>
+                                </div>
+                                <table class="table table-bordered table-striped" width="800px">
+                                    <thead>
+                                    <tr>
+                                        <td><input type="checkbox" class="icheckbox_square-blue"></td>
+                                        <td>属性名称</td>
+                                        <td>操作</td>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="tbody02">
+                                    <tr>
+                                        <td><input type="checkbox" class="icheckbox_square-blue"></td>
+                                        <td><input class="form-control" placeholder="属性名称" name="customAttributeItems">
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-default" title="删除"
+                                                    onclick="deleteOption(this)"><i class="fa fa-trash-o"></i> 删除
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" class="icheckbox_square-blue"
+                                                   name="customAttributeItems"></td>
+                                        <td><input class="form-control" placeholder="属性名称"></td>
+                                        <td>
+                                            <button type="button" class="btn btn-default" title="删除"
+                                                    onclick="deleteOption(this)"><i class="fa fa-trash-o"></i> 删除
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+
+                            </td>
+                        </tr>
+
+                    </table>
+
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-success" data-dismiss="modal" aria-hidden="true" onclick="updateTemplate()">
+                        更新
+                    </button>
+                    <button class="btn btn-default" data-dismiss="modal" aria-hidden="true">关闭</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+</body>
+
+</html>
